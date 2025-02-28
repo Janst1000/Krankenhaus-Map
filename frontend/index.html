@@ -1,67 +1,23 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title>Krankenhäuser Karte</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    #map { height: 600px; }
-  </style>
-</head>
-<body>
-  <h2>Krankenhäuser auf der Karte</h2>
-  <label for="hospitalType">Krankenhaustyp filtern:</label>
-  <select id="hospitalType">
-    <option value="">Alle Krankenhäuser</option>
-    <option value="general">Allgemein</option>
-    <option value="specialized">Spezialisiert</option>
-    <!-- Weitere Optionen je nach deinen Daten -->
-  </select>
-  <div id="map"></div>
+  <head>
+    <meta charset="utf-8" />
+    <title>Krankenhäuser Karte</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <h2>Krankenhäuser auf der Karte</h2>
+    <label for="hospitalType">Krankenhaustyp filtern:</label>
+    <select id="hospitalType">
+      <option value="">Alle Krankenhäuser</option>
+      <option value="general">Allgemein</option>
+      <option value="specialized">Spezialisiert</option>
+      <!-- Weitere Optionen je nach deinen Daten -->
+    </select>
+    <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    // Karte initialisieren
-    var map = L.map('map').setView([51.1657, 10.4515], 6); // Beispiel: Deutschland zentriert
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap-Mitwirkende'
-    }).addTo(map);
-
-    var hospitalsLayer;
-
-    // Funktion zum Laden der Krankenhausdaten
-    function loadHospitals(type) {
-      // Passe die URL ggf. an, falls dein Backend woanders läuft
-      var url = 'http://localhost:5000/hospitals';
-      if (type) {
-        url += '?type=' + type;
-      }
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          console.log('Hospitals data:', data); // Log hospital data
-          // Falls bereits ein Layer vorhanden ist, diesen entfernen
-          if (hospitalsLayer) {
-            hospitalsLayer.clearLayers();
-          }
-          hospitalsLayer = L.geoJSON(data, {
-            onEachFeature: function (feature, layer) {
-              if (feature.properties && feature.properties.name) {
-                layer.bindPopup(feature.properties.name);
-              }
-            }
-          }).addTo(map);
-        })
-        .catch(err => console.error('Fehler beim Laden der Daten:', err));
-    }
-
-    // Initialer Datenabruf ohne Filter
-    loadHospitals('');
-
-    // Filter-Listener hinzufügen
-    document.getElementById('hospitalType').addEventListener('change', function() {
-      loadHospitals(this.value);
-    });
-  </script>
-</body>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+  </body>
 </html>

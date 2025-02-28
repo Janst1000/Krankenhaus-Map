@@ -10,7 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - ./data:/var/lib/postgresql/data
-      - ./krankenhäuserV0.sql:/docker-entrypoint-initdb.d/krankenhäuserV0.sql  # SQL init script
+      - ./KrankenhäuserJoined.sql:/docker-entrypoint-initdb.d/KrankenhäuserJoined.sql  # SQL init script
 
   geoserver:
     image: kartoza/geoserver
@@ -22,14 +22,4 @@ services:
     depends_on:
       - postgis
 
-  db-init:
-    image: postgis/postgis
-    command: >
-      sh -c "until pg_isready -h postgis -p 5432; do sleep 1; done;
-             export PGPASSWORD=password;
-             psql -h postgis -U gis -d gis -f /krankenhäuserV0.sql"
-    volumes:
-      - ./krankenhäuserV0.sql:/krankenhäuserV0.sql
-    depends_on:
-      - postgis
-    restart: "no"
+
