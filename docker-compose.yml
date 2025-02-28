@@ -26,6 +26,7 @@ services:
     image: postgis/postgis
     command: >
       sh -c "until pg_isready -h postgis -p 5432; do sleep 1; done;
+             export PGPASSWORD=password;
              psql -h postgis -U gis -d gis -f /krankenhäuserV0.sql"
     volumes:
       - ./krankenhäuserV0.sql:/krankenhäuserV0.sql
