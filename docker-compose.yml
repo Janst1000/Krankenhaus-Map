@@ -11,6 +11,7 @@ services:
     volumes:
       - ./data:/var/lib/postgresql/data
       - ./KrankenhäuserJoined.sql:/docker-entrypoint-initdb.d/KrankenhäuserJoined.sql  # SQL init script
+      - ./KrankenhäuserMitTyp.sql:/docker-entrypoint-initdb.d/KrankenhäuserMitTyp.sql  # SQL init script
 
   geoserver:
     image: kartoza/geoserver

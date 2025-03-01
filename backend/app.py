@@ -46,7 +46,7 @@ def hospitals():
             # Full data query
             query = """
                 SELECT *
-                FROM public.KrankenhäuserJoined
+                FROM public.KrankenhäuserMitTyp
                 WHERE latitude >= %s AND latitude <= %s
                   AND longitude >= %s AND longitude <= %s;
             """
@@ -54,7 +54,7 @@ def hospitals():
             # Minimal data query - adjust these fields based on what you need for the pins
             query = """
                 SELECT Unique_id as id, t_name, latitude, longitude
-                FROM public.KrankenhäuserJoined
+                FROM public.KrankenhäuserMitTyp
                 WHERE latitude >= %s AND latitude <= %s
                   AND longitude >= %s AND longitude <= %s;
             """
@@ -63,12 +63,12 @@ def hospitals():
         if detailed:
             query = """
                 SELECT *
-                FROM public.KrankenhäuserJoined;
+                FROM public.KrankenhäuserMitTyp;
             """
         else:
             query = """
                 SELECT Unique_id, t_name, latitude, longitude
-                FROM public.KrankenhäuserJoined;
+                FROM public.KrankenhäuserMitTyp;
             """
         cur.execute(query)
         
@@ -119,7 +119,7 @@ def hospital_detail(hospital_id):
     
     query = """
         SELECT Unique_id as id, adresse_name, t_name, internet_adresse, fulladdress
-        FROM public.KrankenhäuserJoined
+        FROM public.KrankenhäuserMitTyp
         WHERE Unique_id = %s;
     """
     cur.execute(query, (hospital_id,))
