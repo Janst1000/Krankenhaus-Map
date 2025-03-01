@@ -40,7 +40,12 @@ var control = L.Routing.control({
 var hospitalsLayer;
 
 // Krankenhaus-Daten laden
-function loadHospitals() {
+function loadHospitals(filterType) {
+  // If filterType is not passed, read from the hospitalType input
+  if(filterType === undefined) {
+    filterType = document.getElementById('hospitalType').value;
+  }
+  
   var bounds = map.getBounds();
   var url =
     'http://localhost:5000/hospitals' +
@@ -48,24 +53,36 @@ function loadHospitals() {
     '&maxLat=' + bounds.getNorth() +
     '&minLon=' + bounds.getWest() +
     '&maxLon=' + bounds.getEast();
-    
+  
+  // Append type filter if set
+  if(filterType) {
+    url += '&type=' + filterType;
+  }
+  
   fetch(url)
     .then(response => response.json())
     .then(data => {
       console.log('Got ' + data.features.length + ' results');
       if (hospitalsLayer) {
-        hospitalsLayer.clearLayers();
+        let anyPopupOpen = false;
+        hospitalsLayer.eachLayer(layer => {
+          if (layer.isPopupOpen()) anyPopupOpen = true;
+        });
+        // Only clear markers if no popup is open
+        if (!anyPopupOpen) {
+          hospitalsLayer.clearLayers();
+        }
       }
-      // GeoJSON-Layer für Krankenhäuser mit benutzerdefiniertem Icon und Popup
       hospitalsLayer = L.geoJSON(data, {
         pointToLayer: function(feature, latlng) {
           return L.marker(latlng, { icon: hospitalIcon });
         },
         onEachFeature: function(feature, layer) {
           if (feature.properties) {
-            let popupContent = "<h3>" + feature.properties.name + "</h3>";
-            popupContent += "<p>Click for more details</p>";
-            layer.bindPopup(popupContent);
+            let popupContent = "<h3>Info wird geladen</h3>";
+            popupContent += "<p>Bitte kurz warten</p>";
+            // Bind popup with autoPan enabled to move the view when opened
+            layer.bindPopup(popupContent, { autoClose: false, closeOnClick: false, autoPan: true });
             // Beim Klick werden detaillierte Infos geladen
             layer.on('click', function() {
               const hospitalId = feature.properties.id || feature.properties.Unique_id;
@@ -76,21 +93,26 @@ function loadHospitals() {
                   .then(detailedFeature => {
                     let detailedContent = "<h3>Hospital Info</h3>";
                     for (let key in detailedFeature.properties) {
-                      if (key === "internet_adresse" && detailedFeature.properties[key]) {
+                      let label = key.charAt(0).toUpperCase() + key.slice(1);
+                      if (key === "webseite" && detailedFeature.properties[key]) {
                         let url = detailedFeature.properties[key];
                         if (!/^https?:\/\//i.test(url)) {
                           url = 'http://' + url;
                         }
                         detailedContent +=
-                          "<strong>" + key + ":</strong> " +
+                          "<strong>" + label + ":</strong> " +
                           "<a href='" + url + "' target='_blank'>" +
                           detailedFeature.properties[key] +
                           "</a><br/>";
+                      } else if (key === "notfallversorgung") {
+                        let value = parseFloat(detailedFeature.properties[key]) || 0;
+                        let displayValue = value > 0 ? "Ja" : "Nein";
+                        detailedContent += "<strong>" + label + ":</strong> " + displayValue + "<br/>";
                       } else if (key === "id") {
                         // ID-Feld überspringen
                       } else {
                         detailedContent +=
-                          "<strong>" + key + ":</strong> " + detailedFeature.properties[key] + "<br/>";
+                          "<strong>" + label + ":</strong> " + detailedFeature.properties[key] + "<br/>";
                       }
                     }
                     layer.getPopup().setContent(detailedContent);
@@ -114,15 +136,6 @@ loadHospitals();
 map.on('moveend', function() {
   loadHospitals();
 });
-
-// Hilfsfunktion, um das Popup eines Krankenhaus-Markers zu setzen
-function setHospitalPopup(properties, marker) {
-  // Zeige den Namen und, falls vorhanden, die Adresse (z. B. fulladdress oder adresse_name)
-  marker.bindPopup(
-    `<b>Nächstes Krankenhaus:</b><br/>${properties.name}<br/>${properties.fulladdress || properties.adresse_name || ''}`
-  );
-  marker.openPopup();
-}
 
 // Ermittle das nächstgelegene Krankenhaus (basierend auf den Krankenhaus-Marker)
 function getNearestHospital(clickLatLng) {
@@ -178,16 +191,13 @@ map.on('click', function(e) {
       .then(response => response.json())
       .then(detailedFeature => {
         nearestHospital.properties = detailedFeature.properties;
-        setHospitalPopup(detailedFeature.properties, nearestHospital.marker);
         control.setWaypoints([startPoint, nearestHospital.latlng]);
       })
       .catch(err => {
         console.error("Error fetching hospital details:", err);
-        setHospitalPopup(nearestHospital.properties, nearestHospital.marker);
         control.setWaypoints([startPoint, nearestHospital.latlng]);
       });
   } else {
-    setHospitalPopup(nearestHospital.properties, nearestHospital.marker);
     control.setWaypoints([startPoint, nearestHospital.latlng]);
   }
 });
@@ -218,4 +228,7 @@ document.getElementById('transportMode').addEventListener('change', function(e) 
 // Filter-Listener (z. B. für Krankenhaustyp)
 document.getElementById('hospitalType').addEventListener('change', function() {
   loadHospitals(this.value);
+});
+map.on('moveend', function() {
+  loadHospitals();
 });

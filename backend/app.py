@@ -38,39 +38,41 @@ def hospitals():
     minLon = request.args.get('minLon')
     maxLon = request.args.get('maxLon')
     
+    # Get the type filter; if emergency then filter hospitals with notfallversorgung > 0
+    filter_type = request.args.get('type', '')
+    emergency_filter = filter_type.lower() == 'emergency'
+    
     # Check if we want minimal data (for map pins) or all data
     detailed = request.args.get('detailed', 'false').lower() == 'true'
     
     if all([minLat, maxLat, minLon, maxLon]):
         if detailed:
-            # Full data query
             query = """
                 SELECT *
                 FROM public.KrankenhäuserMitTyp
                 WHERE latitude >= %s AND latitude <= %s
-                  AND longitude >= %s AND longitude <= %s;
+                  AND longitude >= %s AND longitude <= %s
             """
         else:
-            # Minimal data query - adjust these fields based on what you need for the pins
             query = """
                 SELECT Unique_id as id, t_name, latitude, longitude
                 FROM public.KrankenhäuserMitTyp
                 WHERE latitude >= %s AND latitude <= %s
-                  AND longitude >= %s AND longitude <= %s;
+                  AND longitude >= %s AND longitude <= %s
             """
-        cur.execute(query, (minLat, maxLat, minLon, maxLon))
+        params = [minLat, maxLat, minLon, maxLon]
+        if emergency_filter:
+            query += " AND krankenhäusermittyp_allgemeine_notfallversorgung > 0"
     else:
         if detailed:
-            query = """
-                SELECT *
-                FROM public.KrankenhäuserMitTyp;
-            """
+            query = "SELECT * FROM public.KrankenhäuserMitTyp"
         else:
-            query = """
-                SELECT Unique_id, t_name, latitude, longitude
-                FROM public.KrankenhäuserMitTyp;
-            """
-        cur.execute(query)
+            query = "SELECT Unique_id, t_name, latitude, longitude FROM public.KrankenhäuserMitTyp"
+        params = []
+        if emergency_filter:
+            query += " WHERE krankenhäusermittyp_allgemeine_notfallversorgung > 0" if not params else " AND krankenhäusermittyp_allgemeine_notfallversorgung > 0"
+    
+    cur.execute(query, tuple(params))
         
     rows = cur.fetchall()
     column_names = [desc[0] for desc in cur.description]
@@ -118,7 +120,8 @@ def hospital_detail(hospital_id):
     cur = conn.cursor()
     
     query = """
-        SELECT Unique_id as id, adresse_name, t_name, internet_adresse, fulladdress
+        SELECT Unique_id as id, adresse_name as Name, internet_adresse as Webseite,
+        fulladdress as Adresse, krankenhäusermittyp_allgemeine_notfallversorgung as Notfallversorgung
         FROM public.KrankenhäuserMitTyp
         WHERE Unique_id = %s;
     """
