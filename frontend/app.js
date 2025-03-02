@@ -82,7 +82,7 @@ function loadHospitals(filterType) {
             let popupContent = "<h3>Info wird geladen</h3>";
             popupContent += "<p>Bitte kurz warten</p>";
             // Bind popup with autoPan enabled to move the view when opened
-            layer.bindPopup(popupContent, { autoClose: false, closeOnClick: false, autoPan: true });
+            layer.bindPopup(popupContent, { autoClose: true, closeOnClick: false, autoPan: true });
             // Beim Klick werden detaillierte Infos geladen
             layer.on('click', function() {
               const hospitalId = feature.properties.id || feature.properties.Unique_id;
@@ -162,6 +162,7 @@ function getNearestHospital(clickLatLng) {
 
 var startPoint = null;
 var startMarker = null;
+var osrmRouter = null;
 
 // Klick-Handler: Beim Klick auf die Karte Startpunkt setzen und nächstgelegenes Krankenhaus wählen
 map.on('click', function(e) {
@@ -206,6 +207,7 @@ map.on('click', function(e) {
 document.getElementById('transportMode').addEventListener('change', function(e) {
   var mode = e.target.value; // "driving", "cycling" oder "walking"
   var router;
+  console.log('Mode:', mode);
   if (mode === 'cycling') {
     router = L.Routing.osrmv1({
       serviceUrl: 'https://router.project-osrm.org/route/v1',
@@ -221,7 +223,8 @@ document.getElementById('transportMode').addEventListener('change', function(e) 
       serviceUrl: 'https://router.project-osrm.org/route/v1'
     });
   }
-  control.setRouter(router);
+  control.Routing = router;
+  //control.setRouter(router);
   control.route();
 });
 

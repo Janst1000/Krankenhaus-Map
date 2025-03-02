@@ -17,3 +17,27 @@ header {
   height: 600px;
   flex: 1;
 }
+
+#my-controls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 250px;
+  max-height: 70%;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  padding: 5px;
+  overflow-y: auto;
+  z-index: 1100;
+  font-size: 12px;
+}
+
+.my-controls-panel h3, .my-controls-panel h4 {
+  margin: 5px 0;
+}
+
+.my-controls-panel .filter-controls,
+.my-controls-panel .legend {
+  margin-bottom: 10px;
+}

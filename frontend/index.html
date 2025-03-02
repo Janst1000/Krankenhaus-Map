@@ -14,21 +14,10 @@
   <body>
     <header>
       <h2>Krankenhäuser auf der Karte</h2>
-      <label for="hospitalType">Krankenhaustyp filtern:</label>
-      <select id="hospitalType">
-        <option value="">Alle Krankenhäuser</option>
-        <option value="emergency">Nur mit Notfalleinrichtung</option>
-        <!-- Weitere Optionen je nach deinen Daten -->
-      </select>
-      <label for="transportMode">Fortbewegungsart:</label>
-      <select id="transportMode">
-        <option value="driving">Auto</option>
-        <option value="cycling">Fahrrad</option>
-        <option value="walking">Zu Fuß</option>
-      </select>
-
     </header>
     <div id="map"></div>
+    <!-- Include the custom options pane first so its controls are in the DOM -->
+    <script src="options_pane.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
