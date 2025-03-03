@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS, cross_origin
 import psycopg2
 import json
+import csv
+import pandas as pd  # added pandas import
 
 app = Flask(__name__)
 CORS(app)
@@ -159,5 +161,37 @@ def hospital_detail(hospital_id):
     
     return jsonify(feature)
 
+@app.route('/chartdata', methods=['GET'])
+@cross_origin()
+def chartdata():
+    csv_file_path = 'Krankenhausdaten_verlauf_der_jahre.csv'
+    try:
+        # CSV einlesen mit dem richtigen Encoding und Skip-Zeilen für die Metadaten
+        df = pd.read_csv(csv_file_path, delimiter=';', skiprows=[0,1,2,3,5], decimal=',', encoding='latin1')
+        
+        # Nutze die erste Spalte als Labels, ohne diese umzubenennen
+        label_col = df.columns[0]
+        # Filtere Zeilen, in denen der Wert in der ersten Spalte numerisch ist
+        df = df[pd.to_numeric(df[label_col], errors='coerce').notnull()]
+        df[label_col] = df[label_col].astype(int)
+        labels = df[label_col].tolist()
+
+        # Erstelle Datensätze für alle übrigen Spalten ohne Farben zuzuweisen
+        datasets = []
+        for col in df.columns[1:]:
+            data = pd.to_numeric(df[col], errors='coerce').fillna(0).tolist()
+            datasets.append({
+                "label": col,
+                "data": data,
+                "fill": False,
+                "tension": 0.1
+            })
+        return jsonify({
+            "labels": labels,
+            "datasets": datasets
+        })
+    except Exception as e:
+        print(f"Error while fetching Chart data: {e}")
+        return jsonify({"error": str(e)}), 500
 if __name__ == '__main__':
     app.run(debug=True)

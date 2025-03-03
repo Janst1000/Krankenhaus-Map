@@ -18,6 +18,10 @@
          <option value="walking">Zu Fuß</option>
       </select>
       <br/>
+      <label>
+        <input type="checkbox" id="toggleGraph"> Graph anzeigen
+      </label>
+      <br/>
       <!-- Neuer Filter: Fahrzeit zum nächsten Krankenhaus -->
       <label>
         <input type="checkbox" id="toggleIsochronen"> Nächstes Krankenhaus (Bremen)

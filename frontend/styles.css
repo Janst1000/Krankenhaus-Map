@@ -41,3 +41,39 @@ header {
 .my-controls-panel .legend {
   margin-bottom: 10px;
 }
+
+/* Bestehende Regeln bleiben unverändert */
+
+#chartOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#chartContainer {
+  width: 80%;
+  height: 80%;
+  position: relative;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  padding: 10px;
+}
+
+#chartContainer canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#closeChart {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2000;
+}

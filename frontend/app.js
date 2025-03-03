@@ -95,9 +95,16 @@ function loadHospitals(filterType) {
     return;
   }
   
-  var bounds = map.getBounds();
-  var url =
-    'http://localhost:5000/hospitals' +
+  // Verwende eine feste Bounding Box, wenn Bundeslandfilter aktiv sind
+  var bounds;
+  if (selectedBundeslaender.length > 0) {
+    // Hier: feste Koordinaten, die ganz Deutschland (oder den relevanten Teil) abdecken
+    bounds = L.latLngBounds([47.2, 5.9], [55.1, 15.0]);
+  } else {
+    bounds = map.getBounds();
+  }
+  
+  var url = 'http://localhost:5000/hospitals' +
     '?minLat=' + bounds.getSouth() +
     '&maxLat=' + bounds.getNorth() +
     '&minLon=' + bounds.getWest() +
@@ -190,9 +197,6 @@ function loadHospitals(filterType) {
 
 // Krankenhäuser beim initialen Laden und bei Kartenbewegungen laden
 loadHospitals();
-map.on('moveend', function() {
-  loadHospitals();
-});
 
 // Ermittle das nächstgelegene Krankenhaus (basierend auf den Krankenhaus-Marker)
 function getNearestHospital(clickLatLng) {
@@ -285,10 +289,6 @@ document.querySelectorAll('.bundesland-checkbox').forEach(function(cb) {
   });
 });
 
-map.on('moveend', function() {
-  loadHospitals();
-});
-
 // === Isochronen-Layer einbinden (Export aus QGIS) ===
 
 // Funktion zur Farbzuordnung basierend auf AA_MINS
@@ -359,3 +359,83 @@ isoLegend.onAdd = function (map) {
   return div;
 };
 isoLegend.addTo(map);
+
+
+// Globale Variable für die Chart.js Instanz
+var chart;
+
+function loadChartDataAndRender() {
+  fetch('/chartdata')
+    .then(response => response.json())
+    .then(chartData => {
+      // Setze für alle Datensätze außer dem ersten hidden: true
+      chartData.datasets.forEach((dataset, idx) => {
+        if (idx !== 0) {
+          dataset.hidden = true;
+        }
+      });
+      var ctx = document.getElementById('myChart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "Jahr"
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Wert"
+              }
+            }
+          }
+        }
+      });
+    })
+    .catch(error => {
+      console.error("Fehler beim Laden der Chart-Daten: ", error);
+    });
+}
+
+// Funktionen zum Anzeigen bzw. Ausblenden des Overlays
+function showChartOverlay() {
+  var overlay = document.getElementById('chartOverlay');
+  overlay.style.display = 'flex';
+  // Chart laden, wenn noch nicht vorhanden
+  if (!chart) {
+    loadChartDataAndRender();
+  }
+}
+
+function hideChartOverlay() {
+  var overlay = document.getElementById('chartOverlay');
+  overlay.style.display = 'none';
+}
+
+// Eventlistener für den Graph-Toggle im Options-Paneel
+var toggleGraphCheckbox = document.getElementById('toggleGraph');
+if (toggleGraphCheckbox) {
+  toggleGraphCheckbox.addEventListener('change', function(e) {
+    if (e.target.checked) {
+      showChartOverlay();
+    } else {
+      hideChartOverlay();
+    }
+  });
+}
+
+// Zusätzlich: Schließen-Button im Overlay
+var closeChartButton = document.getElementById('closeChart');
+if (closeChartButton) {
+  closeChartButton.addEventListener('click', function() {
+    hideChartOverlay();
+    // Checkbox im Options-Paneel deaktivieren
+    toggleGraphCheckbox.checked = false;
+  });
+}

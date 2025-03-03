@@ -11,13 +11,19 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
     <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+    <!-- Chart.js einbinden -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
-    <header>
-      <h2>Krankenhäuser auf der Karte</h2>
-    </header>
     <div id="map"></div>
-    <!-- Include the custom options pane first so its controls are in the DOM -->
+    <!-- Chart-Overlay: standardmäßig versteckt -->
+    <div id="chartOverlay" style="display: none;">
+      <div id="chartContainer">
+        <button id="closeChart">x</button>
+        <canvas id="myChart"></canvas>
+      </div>
+    </div>
+    <!-- Options Panel -->
     <script src="options_pane.js"></script>
     <script src="app.js"></script>
   </body>
