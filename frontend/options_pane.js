@@ -81,6 +81,14 @@
     toggleIso.addEventListener('change', function(e) {
       // Hier gehen wir davon aus, dass dein Isochronen-Layer in der globalen Variable overlays["Isochronen"] gespeichert ist
       if (e.target.checked) {
+        // Entferne alle Marker von der Karte:
+        map.eachLayer(function(layer) {
+          // Sicherstellen, dass es sich um einen Marker handelt (aber nicht um den Tile-Layer)
+          if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+          }
+        });
+        control.setWaypoints([]);
         // Wenn aktiviert und der Layer existiert, zur Karte hinzufügen
         if (overlays["Isochronen"]) {
           overlays["Isochronen"].addTo(map);
