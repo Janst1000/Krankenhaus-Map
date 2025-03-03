@@ -55,7 +55,7 @@ def hospitals():
             """
         else:
             query = """
-                SELECT Unique_id as id, t_name, latitude, longitude
+                SELECT Unique_id as id, t_name, latitude, longitude, bundesland
                 FROM public.KrankenhäuserMitTyp
                 WHERE latitude >= %s AND latitude <= %s
                   AND longitude >= %s AND longitude <= %s

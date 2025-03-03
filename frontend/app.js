@@ -65,11 +65,34 @@ control.on('routesfound', function(e) {
   control.setAlternatives(e.routes);
 });
 
+// Funktion, um ausgewählte Bundesländer aus den Checkboxen auszulesen
+function getSelectedBundeslaender() {
+  let checkboxes = document.querySelectorAll('.bundesland-checkbox');
+  let selected = [];
+  checkboxes.forEach(function(cb) {
+    if (cb.checked) {
+      // In Kleinbuchstaben umwandeln, damit der Vergleich konsistent ist:
+      selected.push(cb.value.toLowerCase());
+    }
+  });
+  return selected;
+}
+
 // Krankenhaus-Daten laden
 function loadHospitals(filterType) {
   // If filterType is not passed, read from the hospitalType input
   if(filterType === undefined) {
     filterType = document.getElementById('hospitalType').value;
+  }
+
+  var selectedBundeslaender = getSelectedBundeslaender();
+  // Wenn keine Bundesländer ausgewählt sind, sollen auch keine Krankenhäuser angezeigt werden
+  if(selectedBundeslaender.length === 0) {
+    if (hospitalsLayer) {
+      hospitalsLayer.clearLayers();
+    }
+    console.log("Keine Bundesländer ausgewählt – keine Krankenhäuser werden angezeigt.");
+    return;
   }
   
   var bounds = map.getBounds();
@@ -89,6 +112,13 @@ function loadHospitals(filterType) {
     .then(response => response.json())
     .then(data => {
       console.log('Got ' + data.features.length + ' results');
+
+      // Clientseitiger Bundesland-Filter: Vergleiche immer in Kleinbuchstaben
+      data.features = data.features.filter(feature => {
+        if (!feature.properties.bundesland) return false;
+        return selectedBundeslaender.includes(feature.properties.bundesland.toLowerCase());
+      });
+      
       if (hospitalsLayer) {
         let anyPopupOpen = false;
         hospitalsLayer.eachLayer(layer => {
@@ -99,6 +129,7 @@ function loadHospitals(filterType) {
           hospitalsLayer.clearLayers();
         }
       }
+
       hospitalsLayer = L.geoJSON(data, {
         pointToLayer: function(feature, latlng) {
           return L.marker(latlng, { icon: hospitalIcon });
@@ -246,6 +277,14 @@ document.getElementById('transportMode').addEventListener('change', function(e) 
 document.getElementById('hospitalType').addEventListener('change', function() {
   loadHospitals(this.value);
 });
+
+// --- Filter-Listener für Bundesländer (Checkboxen) ---
+document.querySelectorAll('.bundesland-checkbox').forEach(function(cb) {
+  cb.addEventListener('change', function() {
+    loadHospitals();
+  });
+});
+
 map.on('moveend', function() {
   loadHospitals();
 });
@@ -292,9 +331,9 @@ function loadIsochronen() {
       });
       
       overlays["Isochronen"] = isoLayer;
-      layerControl.addOverlay(isoLayer, "Fahrzeit zum nächsten Krankenhaus");
+      //layerControl.addOverlay(isoLayer, "Fahrzeit zum nächsten Krankenhaus");
       // Optional: direkt anzeigen
-      isoLayer.addTo(map);
+      //isoLayer.addTo(map);
     })
     .catch(err => console.error("Fehler beim Laden der Isochronen:", err));
 }
