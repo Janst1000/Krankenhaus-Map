@@ -33,4 +33,4 @@ From the project root directory, start the Python application:
 ```bash
 python ./backend/main.py
 ```
-Running the Python file from the root ensures all file paths load correctly.
+Running the Python file from the root ensures all file paths load correctly. It should still work when running from within the backend directory but this is the recommended way
