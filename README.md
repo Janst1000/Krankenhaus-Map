@@ -1,7 +1,7 @@
 # Krankenhaus Map
 
 ## Instructions
-
+The app can be found here [Krankenhaus-Map](localhost:5000)
 ### Using Docker Compose
 1. Ensure Docker is installed and running.
 2. From the project root directory, run:
