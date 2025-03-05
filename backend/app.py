@@ -165,10 +165,14 @@ def hospital_detail(hospital_id):
 @app.route('/chartdata', methods=['GET'])
 @cross_origin()
 def chartdata():
-    csv_file_path = './backend/extra_data/Krankenhausdaten_verlauf_der_jahre.csv'
+    csv_file_path = '../extra_data/Krankenhausdaten_verlauf_der_jahre.csv'
     try:
-        # CSV einlesen mit dem richtigen Encoding und Skip-Zeilen für die Metadaten
-        df = pd.read_csv(csv_file_path, delimiter=';', skiprows=[0,1,2,3,5], decimal=',', encoding='latin1')
+        try:
+            # CSV einlesen mit dem richtigen Encoding und Skip-Zeilen für die Metadaten
+            df = pd.read_csv(csv_file_path, delimiter=';', skiprows=[0,1,2,3,5], decimal=',', encoding='latin1')
+        except Exception as e:
+            csv_file_path = './extra_data/Krankenhausdaten_verlauf_der_jahre.csv'
+            df = pd.read_csv(csv_file_path, delimiter=';', skiprows=[0,1,2,3,5], decimal=',', encoding='latin1')
         
         # Nutze die erste Spalte als Labels, ohne diese umzubenennen
         label_col = df.columns[0]
@@ -198,6 +202,10 @@ def chartdata():
 @app.route('/distance_to_hospital_new.geojson', methods=['GET'])
 @cross_origin()
 def send_isochrones():
-    return send_from_directory('./backend/extra_data', 'distance_to_hospital_new.geojson')
+    try:
+        return send_from_directory('../extra_data', 'distance_to_hospital_new.geojson')
+    except Exception as e:
+        print(f"Error while fetching GeoJSON data: {e}")
+        return jsonify({"error": str(e)}), 404
 if __name__ == '__main__':
     app.run(debug=True)
