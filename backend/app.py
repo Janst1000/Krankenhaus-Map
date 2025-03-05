@@ -69,7 +69,8 @@ def hospitals():
         if detailed:
             query = "SELECT * FROM public.KrankenhäuserMitTyp"
         else:
-            query = "SELECT Unique_id, t_name, latitude, longitude FROM public.KrankenhäuserMitTyp"
+            query = """SELECT Unique_id as id, t_name, latitude, longitude, bundesland
+                FROM public.KrankenhäuserMitTyp"""
         params = []
         if emergency_filter:
             query += " WHERE krankenhäusermittyp_allgemeine_notfallversorgung > 0" if not params else " AND krankenhäusermittyp_allgemeine_notfallversorgung > 0"
@@ -164,7 +165,7 @@ def hospital_detail(hospital_id):
 @app.route('/chartdata', methods=['GET'])
 @cross_origin()
 def chartdata():
-    csv_file_path = 'Krankenhausdaten_verlauf_der_jahre.csv'
+    csv_file_path = './backend/extra_data/Krankenhausdaten_verlauf_der_jahre.csv'
     try:
         # CSV einlesen mit dem richtigen Encoding und Skip-Zeilen für die Metadaten
         df = pd.read_csv(csv_file_path, delimiter=';', skiprows=[0,1,2,3,5], decimal=',', encoding='latin1')
@@ -193,5 +194,10 @@ def chartdata():
     except Exception as e:
         print(f"Error while fetching Chart data: {e}")
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/distance_to_hospital_new.geojson', methods=['GET'])
+@cross_origin()
+def send_isochrones():
+    return send_from_directory('./backend/extra_data', 'distance_to_hospital_new.geojson')
 if __name__ == '__main__':
     app.run(debug=True)

@@ -94,25 +94,12 @@ function loadHospitals(filterType) {
     console.log("Keine Bundesländer ausgewählt – keine Krankenhäuser werden angezeigt.");
     return;
   }
-  
-  // Verwende eine feste Bounding Box, wenn Bundeslandfilter aktiv sind
-  var bounds;
-  if (selectedBundeslaender.length > 0) {
-    // Hier: feste Koordinaten, die ganz Deutschland (oder den relevanten Teil) abdecken
-    bounds = L.latLngBounds([47.2, 5.9], [55.1, 15.0]);
-  } else {
-    bounds = map.getBounds();
-  }
-  
-  var url = 'http://localhost:5000/hospitals' +
-    '?minLat=' + bounds.getSouth() +
-    '&maxLat=' + bounds.getNorth() +
-    '&minLon=' + bounds.getWest() +
-    '&maxLon=' + bounds.getEast();
+    
+  var url = 'http://localhost:5000/hospitals'
   
   // Append type filter if set
   if(filterType) {
-    url += '&type=' + filterType;
+    url += '?type=' + filterType;
   }
   
   fetch(url)
