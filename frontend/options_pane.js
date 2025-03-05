@@ -1,5 +1,5 @@
 (function() {
-  // Create a custom controls panel
+  // Einstellungs-Panel erstellen
   var panel = L.DomUtil.create('div', 'my-controls-panel');
   panel.id = 'my-controls';
   panel.innerHTML = `
@@ -56,10 +56,10 @@
     </div>
   `;
   
-  // Prevent clicks on the panel from affecting the map
+  // Verhindere, dass Klicks auf dem Panel die Karte beinflussen
   L.DomEvent.disableClickPropagation(panel);
   
-  // Append the panel inside the map container
+  // Panel im Map-Container einfügen
   var mapContainer = document.getElementById('map');
   mapContainer.appendChild(panel);
 

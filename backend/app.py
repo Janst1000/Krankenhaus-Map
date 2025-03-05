@@ -2,12 +2,11 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS, cross_origin
 import psycopg2
 import json
-import csv
-import pandas as pd  # added pandas import
+import pandas as pd
 
 app = Flask(__name__)
 CORS(app)
-# Konfiguriere hier deine Datenbankverbindung
+# Datenbank-Konfiguration
 DB_CONFIG = {
     'dbname': 'gis',
     'user': 'gis',
@@ -16,38 +15,42 @@ DB_CONFIG = {
     'port': '5432'
 }
 
+# Verbindung zur Datenbank herstellen
 def get_db_connection():
     conn = psycopg2.connect(**DB_CONFIG)
     return conn
 
+# Bereitstellen des Frontends
 @app.route('/', methods=['GET'])
 def serve_index():
     return send_from_directory('../frontend', 'index.html')
 
-# Optional: Serve other static files from the frontend folder
+# Alle anderen statischen Dateien bereitstellen
 @app.route('/<path:path>', methods=['GET'])
 def serve_static(path):
     return send_from_directory('../frontend', path)
 
+# Endpunkt für Krankenhäuser
 @app.route('/hospitals', methods=['GET'])
 def hospitals():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Check for bounding-box parameters
+    # Bounding Box Koordinaten aus der URL holen
     minLat = request.args.get('minLat')
     maxLat = request.args.get('maxLat')
     minLon = request.args.get('minLon')
     maxLon = request.args.get('maxLon')
     
-    # Get the type filter; if emergency then filter hospitals with notfallversorgung > 0
+    # Filter für Notfallversorgung aus der URL holen
     filter_type = request.args.get('type', '')
     emergency_filter = filter_type.lower() == 'emergency'
     
-    # Check if we want minimal data (for map pins) or all data
+    # Checken ob wir alle Daten oder nur die wichtigsten Daten zurückgeben sollen
     detailed = request.args.get('detailed', 'false').lower() == 'true'
     
     if all([minLat, maxLat, minLon, maxLon]):
+        # Query für Krankenhäuser innerhalb einer Bounding Box
         if detailed:
             query = """
                 SELECT *
@@ -63,15 +66,18 @@ def hospitals():
                   AND longitude >= %s AND longitude <= %s
             """
         params = [minLat, maxLat, minLon, maxLon]
+        # Filter für Notfallversorgung hinzufügen. Alles größer als 0 bedeutet, dass Notfallversorgung vorhanden ist
         if emergency_filter:
             query += " AND krankenhäusermittyp_allgemeine_notfallversorgung > 0"
     else:
+        # Query für alle Krankenhäuser
         if detailed:
             query = "SELECT * FROM public.KrankenhäuserMitTyp"
         else:
             query = """SELECT Unique_id as id, t_name, latitude, longitude, bundesland
                 FROM public.KrankenhäuserMitTyp"""
         params = []
+        # Filter für Notfallversorgung hinzufügen. Alles größer als 0 bedeutet, dass Notfallversorgung vorhanden ist
         if emergency_filter:
             query += " WHERE krankenhäusermittyp_allgemeine_notfallversorgung > 0" if not params else " AND krankenhäusermittyp_allgemeine_notfallversorgung > 0"
     
@@ -80,10 +86,11 @@ def hospitals():
     rows = cur.fetchall()
     column_names = [desc[0] for desc in cur.description]
 
-    # Get indices for latitude and longitude
+    # Koordinaten-Indexe in den Daten finden
     lat_index = column_names.index('latitude') if 'latitude' in column_names else None
     lon_index = column_names.index('longitude') if 'longitude' in column_names else None
     
+    #Erstellen des GeoJSON-Objekts
     features = []
     for row in rows:
         properties = { col: row[i] for i, col in enumerate(column_names)
@@ -115,7 +122,7 @@ def hospitals():
     
     return jsonify(geojson)
 
-# Add a new endpoint for detailed hospital info
+# Endpunkt für Krankenhausdetails beim Anklicken eines Markers
 @app.route('/hospital/<int:hospital_id>', methods=['GET'])
 @cross_origin()
 def hospital_detail(hospital_id):
@@ -134,6 +141,7 @@ def hospital_detail(hospital_id):
     if not row:
         return jsonify({"error": "Hospital not found"}), 404
     
+    # GeoJSON Objekt erstellen
     column_names = [desc[0] for desc in cur.description]
     lat_index = column_names.index('latitude') if 'latitude' in column_names else None
     lon_index = column_names.index('longitude') if 'longitude' in column_names else None
@@ -162,6 +170,7 @@ def hospital_detail(hospital_id):
     
     return jsonify(feature)
 
+# Endpunkt für die Historischen Daten
 @app.route('/chartdata', methods=['GET'])
 @cross_origin()
 def chartdata():
@@ -171,6 +180,7 @@ def chartdata():
             # CSV einlesen mit dem richtigen Encoding und Skip-Zeilen für die Metadaten
             df = pd.read_csv(csv_file_path, delimiter=';', skiprows=[0,1,2,3,5], decimal=',', encoding='latin1')
         except Exception as e:
+            # Falls die Datei nich gefunden wird, wird es mit einem zweiten Pfad versucht
             csv_file_path = './extra_data/Krankenhausdaten_verlauf_der_jahre.csv'
             df = pd.read_csv(csv_file_path, delimiter=';', skiprows=[0,1,2,3,5], decimal=',', encoding='latin1')
         
@@ -181,7 +191,7 @@ def chartdata():
         df[label_col] = df[label_col].astype(int)
         labels = df[label_col].tolist()
 
-        # Erstelle Datensätze für alle übrigen Spalten ohne Farben zuzuweisen
+        # Erstelle Datensätze für alle übrigen Spalten
         datasets = []
         for col in df.columns[1:]:
             data = pd.to_numeric(df[col], errors='coerce').fillna(0).tolist()
@@ -199,6 +209,7 @@ def chartdata():
         print(f"Error while fetching Chart data: {e}")
         return jsonify({"error": str(e)}), 500
     
+# Endpunkt für die Isochronen
 @app.route('/distance_to_hospital_new.geojson', methods=['GET'])
 @cross_origin()
 def send_isochrones():

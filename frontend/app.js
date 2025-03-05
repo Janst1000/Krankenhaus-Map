@@ -16,11 +16,6 @@ var startIcon = L.icon({
   iconSize: [32, 32],
   iconAnchor: [16, 32]
 });
-var endIcon = L.icon({
-  iconUrl: 'end-icon.svg',  // eigenes Icon für das Ziel
-  iconSize: [32, 32],
-  iconAnchor: [16, 32]
-});
 
 // --- Globale Variablen und LayerControl ---
 var currentMode = 'driving';  // "driving", "walking", "cycling"
@@ -42,6 +37,7 @@ var control = L.Routing.control({
   createMarker: function() { 
     return null; // Wir verwalten die Marker manuell
   },
+  // Darstellung der Route
   lineOptions: {
     styles: [{ color: 'blue', opacity: 0.7, weight: 5 }]
   }
@@ -80,7 +76,7 @@ function getSelectedBundeslaender() {
 
 // Krankenhaus-Daten laden
 function loadHospitals(filterType) {
-  // If filterType is not passed, read from the hospitalType input
+  // Krankenhaustyp aus dem Select-Element auslesen, falls nicht übergeben
   if(filterType === undefined) {
     filterType = document.getElementById('hospitalType').value;
   }
@@ -97,7 +93,7 @@ function loadHospitals(filterType) {
     
   var url = 'http://localhost:5000/hospitals'
   
-  // Append type filter if set
+  // Filter-Parameter hinzufügen, falls vorhanden
   if(filterType) {
     url += '?type=' + filterType;
   }
@@ -118,7 +114,7 @@ function loadHospitals(filterType) {
         hospitalsLayer.eachLayer(layer => {
           if (layer.isPopupOpen()) anyPopupOpen = true;
         });
-        // Only clear markers if no popup is open
+        // Wenn keine Popups offen sind, entferne die Layer
         if (!anyPopupOpen) {
           hospitalsLayer.clearLayers();
         }
@@ -132,20 +128,23 @@ function loadHospitals(filterType) {
           if (feature.properties) {
             let popupContent = "<h3>Info wird geladen</h3>";
             popupContent += "<p>Bitte kurz warten</p>";
-            // Bind popup with autoPan enabled to move the view when opened
+            // Popup hinzufügen 
             layer.bindPopup(popupContent, { autoClose: true, closeOnClick: false, autoPan: true });
             // Beim Klick werden detaillierte Infos geladen
             layer.on('click', function() {
               const hospitalId = feature.properties.id || feature.properties.Unique_id;
               if (hospitalId) {
                 layer.openPopup();
+                // Detailinformationen vom Server laden
                 fetch(`http://localhost:5000/hospital/${hospitalId}`)
                   .then(response => response.json())
                   .then(detailedFeature => {
                     let detailedContent = "<h3>Hospital Info</h3>";
+                    // Formatieren und in Popup einfügen
                     for (let key in detailedFeature.properties) {
                       let label = key.charAt(0).toUpperCase() + key.slice(1);
                       if (key === "webseite" && detailedFeature.properties[key]) {
+                        // Webseite als Link formatieren
                         let url = detailedFeature.properties[key];
                         if (!/^https?:\/\//i.test(url)) {
                           url = 'http://' + url;
@@ -156,6 +155,7 @@ function loadHospitals(filterType) {
                           detailedFeature.properties[key] +
                           "</a><br/>";
                       } else if (key === "notfallversorgung") {
+                        // Notfallversorgung als Ja/Nein anzeigen
                         let value = parseFloat(detailedFeature.properties[key]) || 0;
                         let displayValue = value > 0 ? "Ja" : "Nein";
                         detailedContent += "<strong>" + label + ":</strong> " + displayValue + "<br/>";

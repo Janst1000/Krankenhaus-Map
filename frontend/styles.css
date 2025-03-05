@@ -42,8 +42,6 @@ header {
   margin-bottom: 10px;
 }
 
-/* Bestehende Regeln bleiben unverändert */
-
 #chartOverlay {
   position: absolute;
   top: 0;
